@@ -2582,7 +2582,7 @@ MonoBehaviour:
   cameraTransformHolder: {fileID: 611192236}
   walkingCamFollow: {fileID: 921087439}
   runningCamFollow: {fileID: 908613460}
-  rotationSpeed: 3
+  rotationSpeed: 0.1
   minVerticalAngle: -80
   maxVerticalAngle: 80
 --- !u!54 &2058211322

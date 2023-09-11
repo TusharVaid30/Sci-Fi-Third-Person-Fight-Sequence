@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CameraRotation : MonoBehaviour
 {
@@ -12,6 +14,14 @@ public class CameraRotation : MonoBehaviour
     private float _mouseX;
     private float _mouseY;
     private PlayerMovement _playerMovement;
+    private PlayerInput _playerInput;
+    private InputAction _mouseMovement;
+
+    private void Awake()
+    {
+        _playerInput = GetComponent<PlayerInput>();
+        _mouseMovement = _playerInput.actions["Camera Rotation"];
+    }
 
     private void Start()
     {
@@ -24,9 +34,11 @@ public class CameraRotation : MonoBehaviour
     private void Update()
     {
         cameraTransformHolder.position = transform.position;
+
+        Vector2 mouseAxis = _mouseMovement.ReadValue<Vector2>();
         
-        _mouseX += Input.GetAxis("Mouse X") * rotationSpeed;
-        _mouseY -= Input.GetAxis("Mouse Y") * rotationSpeed;
+        _mouseX += mouseAxis.x * rotationSpeed;
+        _mouseY -= mouseAxis.y * rotationSpeed;
         _mouseY = Mathf.Clamp(_mouseY, minVerticalAngle, maxVerticalAngle);
 
         cameraTransformHolder.rotation = Quaternion.Euler(new Vector3(0f, _mouseX, 0f));
