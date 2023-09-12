@@ -1,10 +1,11 @@
-using System;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
     public bool moving;
+    public bool runningFast;
     
     [Header("Player Settings")]
     [SerializeField] private Animator playerAnimator;
@@ -13,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     
     [Header("Camera Settings")]
     [SerializeField] private GameObject[] cameras;
+    [SerializeField] private MultiAimConstraint headConstraint;
 
     private PlayerInput _playerInput;
     private InputAction _movementAction;
@@ -29,7 +31,6 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody _playerRb;
     private Vector3 _moveDirection;
     private float _velocity;
-    private bool _runningFast;
     
     private void Awake()
     {
@@ -62,7 +63,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        _playerRb.velocity = transform.TransformDirection(_moveDirection) * (_velocity * Time.fixedDeltaTime);
+        Vector3 vel = _playerRb.velocity;
+        Vector3 targetVelocity = transform.TransformDirection(_moveDirection) * (_velocity * Time.fixedDeltaTime);
+        vel.x = targetVelocity.x;
+        vel.z = targetVelocity.z;
+        _playerRb.velocity = vel;
     }
 
     private void Move(InputAction.CallbackContext obj)
@@ -70,38 +75,49 @@ public class PlayerMovement : MonoBehaviour
         _direction = obj.ReadValue<Vector2>();
         moving = true;
         _moveDirection = new Vector3(_direction.x, 0f, _direction.y);
-        if (!_runningFast)
-            _velocity = maxWalkingSpeed;
-        else
-            _velocity = maxRunningSpeed;
+
+        if (_direction.y < 0f)
+            SetWalkingState();
+        
+        _velocity = !runningFast ? maxWalkingSpeed : maxRunningSpeed;
     }
 
     private void EndMove(InputAction.CallbackContext obj)
     {
         _direction = Vector2.zero;
-        moving = false;
         _velocity = 0f;
+        moving = false;
+        SetWalkingState();
     }
 
     private void StartRun(InputAction.CallbackContext obj)
     {
         if (!moving || _direction.y < 0f) return;
-        _speedReduction = 1;
-        cameras[0].SetActive(false);
-        cameras[1].SetActive(true);
+        SetRunningState();
         _velocity = maxRunningSpeed;
-        _runningFast = true;
+        headConstraint.weight = 0f;
     }
 
     private void EndRun(InputAction.CallbackContext obj)
     {
-        _speedReduction = 2;
+        SetWalkingState();
+        _velocity = moving ? maxWalkingSpeed : 0f;
+        headConstraint.weight = 1f;
+    }
+
+    private void SetWalkingState()
+    {
         cameras[0].SetActive(true);
         cameras[1].SetActive(false);
-        _runningFast = false;
-        if (moving)
-            _velocity = maxWalkingSpeed;
-        else
-            _velocity = 0f;
+        runningFast = false;
+        _speedReduction = 2;
+    }
+    
+    private void SetRunningState()
+    {
+        cameras[0].SetActive(false);
+        cameras[1].SetActive(true);
+        runningFast = true;
+        _speedReduction = 1;
     }
 }
